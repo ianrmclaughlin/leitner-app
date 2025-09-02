@@ -1,3 +1,5 @@
+
+
 import React, { useState, useEffect } from "react";
 import "./leitner-app.css"; // Import the CSS file
 
@@ -147,16 +149,42 @@ const questionsData = {
   ],
 };
 
+
+
 export default function App() {
-  const [box1, setBox1] = useState(questionsData.questions);
+  const [box1, setBox1] = useState([]);
   const [box2, setBox2] = useState([]);
   const [currentQ, setCurrentQ] = useState(null);
   const [round, setRound] = useState(1);
   const [feedback, setFeedback] = useState(null);
 
+  // ✅ Load from localStorage on first render
+  useEffect(() => {
+    const savedBox1 = JSON.parse(localStorage.getItem("box1"));
+    const savedBox2 = JSON.parse(localStorage.getItem("box2"));
+    const savedRound = JSON.parse(localStorage.getItem("round"));
+
+    if (savedBox1 && savedBox2) {
+      setBox1(savedBox1);
+      setBox2(savedBox2);
+      setRound(savedRound || 1);
+    } else {
+      // first session: start with all questions in Box 1
+      setBox1(questionsData.questions);
+    }
+  }, []);
+
+  // ✅ Save progress whenever state changes
+  useEffect(() => {
+    localStorage.setItem("box1", JSON.stringify(box1));
+    localStorage.setItem("box2", JSON.stringify(box2));
+    localStorage.setItem("round", JSON.stringify(round));
+  }, [box1, box2, round]);
+
+  // Pick next question
   useEffect(() => {
     pickNextQuestion();
-  }, [round]);
+  }, [round, box1, box2]);
 
   function pickNextQuestion() {
     let pool = [];
@@ -245,3 +273,4 @@ export default function App() {
     </div>
   );
 }
+
