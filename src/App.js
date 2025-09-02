@@ -149,8 +149,6 @@ const questionsData = {
   ],
 };
 
-
-
 export default function App() {
   const [box1, setBox1] = useState([]);
   const [box2, setBox2] = useState([]);
@@ -181,11 +179,6 @@ export default function App() {
     localStorage.setItem("round", JSON.stringify(round));
   }, [box1, box2, round]);
 
-  // Pick next question
-  useEffect(() => {
-    pickNextQuestion();
-  }, [round, box1, box2]);
-
   function pickNextQuestion() {
     let pool = [];
     if (box1.length > 0) {
@@ -195,7 +188,10 @@ export default function App() {
     } else {
       pool = box1.concat(box2);
     }
-    if (pool.length === 0) return;
+    if (pool.length === 0) {
+      setCurrentQ(null);
+      return;
+    }
     const next = pool[Math.floor(Math.random() * pool.length)];
     setCurrentQ(next);
     setFeedback(null);
@@ -221,6 +217,16 @@ export default function App() {
 
   function nextQuestion() {
     setRound((r) => r + 1);
+    pickNextQuestion(); // ✅ only fetch when user clicks
+  }
+
+  function resetProgress() {
+    localStorage.clear();
+    setBox1(questionsData.questions);
+    setBox2([]);
+    setRound(1);
+    setCurrentQ(null);
+    setFeedback(null);
   }
 
   return (
@@ -231,10 +237,13 @@ export default function App() {
             <span>📦 Box 1: {box1.length}</span>
             <span>📦 Box 2: {box2.length}</span>
             <span>Round: {round}</span>
+            <button className="reset-btn" onClick={resetProgress}>
+              Reset
+            </button>
           </div>
 
           {!currentQ ? (
-            <p className="message">No questions available 🎉</p>
+            <p className="message">Click "Next Question" to begin 🎯</p>
           ) : (
             <div>
               <h2 className="question">{currentQ.question}</h2>
@@ -268,9 +277,16 @@ export default function App() {
               )}
             </div>
           )}
+
+          {!feedback && !currentQ && (
+            <button className="next-btn" onClick={nextQuestion}>
+              Start Quiz
+            </button>
+          )}
         </div>
       </div>
     </div>
   );
 }
+
 
