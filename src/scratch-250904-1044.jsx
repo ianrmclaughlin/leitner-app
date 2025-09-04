@@ -1,6 +1,4 @@
 
 
-git remote add origin https://github.com/ianrmclaughlin/leitner-app.git
+http://localhost:3000/leitner-app
 
-
-git remote set-url origin https://github.com/ianrmclaughlin/leitner-app.git
