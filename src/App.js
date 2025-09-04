@@ -234,11 +234,13 @@ export default function App() {
 
   useEffect(() => {
     pickNextQuestion();
-  }, [round, box1, box2]);
-
+  }, []);
+    
+  // Next Question handler
   function nextQuestion() {
     setRound((r) => r + 1);
-  }
+    pickNextQuestion();   // ✅ explicitly load the next one here
+  }  
 
   return (
     <div className="app">
