@@ -1,6 +1,9 @@
+
 import React, { useState, useEffect } from "react";
-import Cookies from "js-cookie"; // ✅ Import cookie library
+import Cookies from "js-cookie";
 import "./leitner-app.css";
+
+
 
 // Embed questions directly in code
 const questionsData = {
@@ -149,6 +152,7 @@ const questionsData = {
 };
 
 
+
 export default function App() {
   const [box1, setBox1] = useState([]);
   const [box2, setBox2] = useState([]);
@@ -156,38 +160,62 @@ export default function App() {
   const [round, setRound] = useState(1);
   const [feedback, setFeedback] = useState(null);
 
-    useEffect(() => {
-      const savedBox1 = Cookies.get("box1");
-      const savedBox2 = Cookies.get("box2");
-      const savedRound = Cookies.get("round");
-    
-      if (savedBox1 && savedBox2) {
-        const box1Parsed = JSON.parse(savedBox1);
-        const box2Parsed = JSON.parse(savedBox2);
-    
-        // ✅ If both are empty, reset quiz
-        if (box1Parsed.length === 0 && box2Parsed.length === 0) {
-          setBox1(questionsData.questions);
-          setBox2([]);
-          setRound(1);
-        } else {
-          setBox1(box1Parsed);
-          setBox2(box2Parsed);
-          setRound(savedRound ? parseInt(savedRound, 10) : 1);
-        }
-      } else {
-        setBox1(questionsData.questions);
-      }
-    }, []);
+  // ✅ Track answered questions
+  const [answeredCorrect, setAnsweredCorrect] = useState([]);
+  const [answeredIncorrect, setAnsweredIncorrect] = useState([]);
 
-    
-
-  // ✅ Save progress whenever box1, box2, or round changes
+  // 🔹 Load from cookies
   useEffect(() => {
-    Cookies.set("box1", JSON.stringify(box1), { expires: 7 });
-    Cookies.set("box2", JSON.stringify(box2), { expires: 7 });
+    const savedCorrect = Cookies.get("answeredCorrect");
+    const savedIncorrect = Cookies.get("answeredIncorrect");
+    const savedRound = Cookies.get("round");
+
+    if (savedCorrect || savedIncorrect) {
+      const correct = savedCorrect ? JSON.parse(savedCorrect) : [];
+      const incorrect = savedIncorrect ? JSON.parse(savedIncorrect) : [];
+
+      setAnsweredCorrect(correct);
+      setAnsweredIncorrect(incorrect);
+
+      // rebuild boxes based on answers
+      const correctQs = questionsData.questions.filter((q) => correct.includes(q.id));
+      const incorrectQs = questionsData.questions.filter((q) => incorrect.includes(q.id));
+      const untouched = questionsData.questions.filter(
+        (q) => !correct.includes(q.id) && !incorrect.includes(q.id)
+      );
+
+      setBox1([...untouched, ...incorrectQs]);
+      setBox2(correctQs);
+      setRound(savedRound ? parseInt(savedRound, 10) : 1);
+    } else {
+      setBox1(questionsData.questions);
+    }
+  }, []);
+
+  // 🔹 Save to cookies
+  useEffect(() => {
+    Cookies.set("answeredCorrect", JSON.stringify(answeredCorrect), { expires: 7 });
+    Cookies.set("answeredIncorrect", JSON.stringify(answeredIncorrect), { expires: 7 });
     Cookies.set("round", round, { expires: 7 });
-  }, [box1, box2, round]);
+  }, [answeredCorrect, answeredIncorrect, round]);
+
+  function handleAnswer(choice) {
+    if (!currentQ) return;
+    const isCorrect = choice === currentQ.answer;
+    setFeedback({ correct: isCorrect, explanation: currentQ.explanation });
+
+    if (isCorrect) {
+      setBox1((prev) => prev.filter((q) => q.id !== currentQ.id));
+      setBox2((prev) => prev.find((q) => q.id === currentQ.id) ? prev : [...prev, currentQ]);
+      setAnsweredCorrect((prev) => prev.includes(currentQ.id) ? prev : [...prev, currentQ.id]);
+      setAnsweredIncorrect((prev) => prev.filter((id) => id !== currentQ.id));
+    } else {
+      setBox1((prev) => prev.find((q) => q.id === currentQ.id) ? prev : [...prev, currentQ]);
+      setBox2((prev) => prev.filter((q) => q.id !== currentQ.id));
+      setAnsweredIncorrect((prev) => prev.includes(currentQ.id) ? prev : [...prev, currentQ.id]);
+      setAnsweredCorrect((prev) => prev.filter((id) => id !== currentQ.id));
+    }
+  }
 
   function pickNextQuestion() {
     let pool = [];
@@ -208,24 +236,6 @@ export default function App() {
     pickNextQuestion();
   }, [round, box1, box2]);
 
-  function handleAnswer(choice) {
-    if (!currentQ) return;
-    const isCorrect = choice === currentQ.answer;
-    setFeedback({ correct: isCorrect, explanation: currentQ.explanation });
-
-    if (isCorrect) {
-      setBox1((prev) => prev.filter((q) => q.id !== currentQ.id));
-      setBox2((prev) =>
-        prev.find((q) => q.id === currentQ.id) ? prev : [...prev, currentQ]
-      );
-    } else {
-      setBox1((prev) =>
-        prev.find((q) => q.id === currentQ.id) ? prev : [...prev, currentQ]
-      );
-      setBox2((prev) => prev.filter((q) => q.id !== currentQ.id));
-    }
-  }
-
   function nextQuestion() {
     setRound((r) => r + 1);
   }
@@ -237,6 +247,8 @@ export default function App() {
           <div className="stats">
             <span>📦 Box 1: {box1.length}</span>
             <span>📦 Box 2: {box2.length}</span>
+            <span>✅ Correct: {answeredCorrect.length}</span>
+            <span>❌ Incorrect: {answeredIncorrect.length}</span>
             <span>Round: {round}</span>
           </div>
 
@@ -259,11 +271,7 @@ export default function App() {
               </div>
 
               {feedback && (
-                <div
-                  className={`feedback ${
-                    feedback.correct ? "correct" : "incorrect"
-                  }`}
-                >
+                <div className={`feedback ${feedback.correct ? "correct" : "incorrect"}`}>
                   <p className="feedback-title">
                     {feedback.correct ? "✅ Correct!" : "❌ Incorrect"}
                   </p>
@@ -280,3 +288,5 @@ export default function App() {
     </div>
   );
 }
+
+
