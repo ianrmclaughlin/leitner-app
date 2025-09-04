@@ -156,20 +156,31 @@ export default function App() {
   const [round, setRound] = useState(1);
   const [feedback, setFeedback] = useState(null);
 
-  // ✅ Load progress from cookies on first render
-  useEffect(() => {
-    const savedBox1 = Cookies.get("box1");
-    const savedBox2 = Cookies.get("box2");
-    const savedRound = Cookies.get("round");
+    useEffect(() => {
+      const savedBox1 = Cookies.get("box1");
+      const savedBox2 = Cookies.get("box2");
+      const savedRound = Cookies.get("round");
+    
+      if (savedBox1 && savedBox2) {
+        const box1Parsed = JSON.parse(savedBox1);
+        const box2Parsed = JSON.parse(savedBox2);
+    
+        // ✅ If both are empty, reset quiz
+        if (box1Parsed.length === 0 && box2Parsed.length === 0) {
+          setBox1(questionsData.questions);
+          setBox2([]);
+          setRound(1);
+        } else {
+          setBox1(box1Parsed);
+          setBox2(box2Parsed);
+          setRound(savedRound ? parseInt(savedRound, 10) : 1);
+        }
+      } else {
+        setBox1(questionsData.questions);
+      }
+    }, []);
 
-    if (savedBox1 && savedBox2) {
-      setBox1(JSON.parse(savedBox1));
-      setBox2(JSON.parse(savedBox2));
-      setRound(savedRound ? parseInt(savedRound, 10) : 1);
-    } else {
-      setBox1(questionsData.questions);
-    }
-  }, []);
+    
 
   // ✅ Save progress whenever box1, box2, or round changes
   useEffect(() => {
