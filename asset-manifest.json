@@ -1,15 +1,15 @@
 {
   "files": {
     "main.css": "/leitner-app/static/css/main.2fe72fde.css",
-    "main.js": "/leitner-app/static/js/main.7274a546.js",
+    "main.js": "/leitner-app/static/js/main.a12ec09f.js",
     "static/js/453.d4b7f03c.chunk.js": "/leitner-app/static/js/453.d4b7f03c.chunk.js",
     "index.html": "/leitner-app/index.html",
     "main.2fe72fde.css.map": "/leitner-app/static/css/main.2fe72fde.css.map",
-    "main.7274a546.js.map": "/leitner-app/static/js/main.7274a546.js.map",
+    "main.a12ec09f.js.map": "/leitner-app/static/js/main.a12ec09f.js.map",
     "453.d4b7f03c.chunk.js.map": "/leitner-app/static/js/453.d4b7f03c.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.2fe72fde.css",
-    "static/js/main.7274a546.js"
+    "static/js/main.a12ec09f.js"
   ]
 }
