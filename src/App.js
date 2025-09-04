@@ -1,11 +1,7 @@
-
 import React, { useState, useEffect } from "react";
 import Cookies from "js-cookie";
 import "./leitner-app.css";
 
-
-
-// Embed questions directly in code
 const questionsData = {
   questions: [
     {
@@ -151,8 +147,6 @@ const questionsData = {
   ],
 };
 
-
-
 export default function App() {
   const [box1, setBox1] = useState([]);
   const [box2, setBox2] = useState([]);
@@ -177,7 +171,6 @@ export default function App() {
       setAnsweredCorrect(correct);
       setAnsweredIncorrect(incorrect);
 
-      // rebuild boxes based on answers
       const correctQs = questionsData.questions.filter((q) => correct.includes(q.id));
       const incorrectQs = questionsData.questions.filter((q) => incorrect.includes(q.id));
       const untouched = questionsData.questions.filter(
@@ -189,6 +182,8 @@ export default function App() {
       setRound(savedRound ? parseInt(savedRound, 10) : 1);
     } else {
       setBox1(questionsData.questions);
+      setBox2([]);
+      setRound(1);
     }
   }, []);
 
@@ -199,24 +194,7 @@ export default function App() {
     Cookies.set("round", round, { expires: 7 });
   }, [answeredCorrect, answeredIncorrect, round]);
 
-  function handleAnswer(choice) {
-    if (!currentQ) return;
-    const isCorrect = choice === currentQ.answer;
-    setFeedback({ correct: isCorrect, explanation: currentQ.explanation });
-
-    if (isCorrect) {
-      setBox1((prev) => prev.filter((q) => q.id !== currentQ.id));
-      setBox2((prev) => prev.find((q) => q.id === currentQ.id) ? prev : [...prev, currentQ]);
-      setAnsweredCorrect((prev) => prev.includes(currentQ.id) ? prev : [...prev, currentQ.id]);
-      setAnsweredIncorrect((prev) => prev.filter((id) => id !== currentQ.id));
-    } else {
-      setBox1((prev) => prev.find((q) => q.id === currentQ.id) ? prev : [...prev, currentQ]);
-      setBox2((prev) => prev.filter((q) => q.id !== currentQ.id));
-      setAnsweredIncorrect((prev) => prev.includes(currentQ.id) ? prev : [...prev, currentQ.id]);
-      setAnsweredCorrect((prev) => prev.filter((id) => id !== currentQ.id));
-    }
-  }
-
+  // ✅ Pick a new question from boxes
   function pickNextQuestion() {
     let pool = [];
     if (box1.length > 0) {
@@ -226,21 +204,52 @@ export default function App() {
     } else {
       pool = box1.concat(box2);
     }
-    if (pool.length === 0) return;
+    if (pool.length === 0) {
+      setCurrentQ(null);
+      return;
+    }
     const next = pool[Math.floor(Math.random() * pool.length)];
     setCurrentQ(next);
     setFeedback(null);
   }
 
+  // 🔹 Only pick a question once boxes are initialized
   useEffect(() => {
-    pickNextQuestion();
-  }, []);
-    
-  // Next Question handler
+    if ((box1.length > 0 || box2.length > 0) && !currentQ) {
+      pickNextQuestion();
+    }
+  }, [box1, box2]);
+
+  function handleAnswer(choice) {
+    if (!currentQ) return;
+    const isCorrect = choice === currentQ.answer;
+    setFeedback({ correct: isCorrect, explanation: currentQ.explanation });
+
+    if (isCorrect) {
+      setBox1((prev) => prev.filter((q) => q.id !== currentQ.id));
+      setBox2((prev) =>
+        prev.find((q) => q.id === currentQ.id) ? prev : [...prev, currentQ]
+      );
+      setAnsweredCorrect((prev) =>
+        prev.includes(currentQ.id) ? prev : [...prev, currentQ.id]
+      );
+      setAnsweredIncorrect((prev) => prev.filter((id) => id !== currentQ.id));
+    } else {
+      setBox1((prev) =>
+        prev.find((q) => q.id === currentQ.id) ? prev : [...prev, currentQ]
+      );
+      setBox2((prev) => prev.filter((q) => q.id !== currentQ.id));
+      setAnsweredIncorrect((prev) =>
+        prev.includes(currentQ.id) ? prev : [...prev, currentQ.id]
+      );
+      setAnsweredCorrect((prev) => prev.filter((id) => id !== currentQ.id));
+    }
+  }
+
   function nextQuestion() {
     setRound((r) => r + 1);
-    pickNextQuestion();   // ✅ explicitly load the next one here
-  }  
+    pickNextQuestion(); // ✅ only move forward on button click
+  }
 
   return (
     <div className="app">
@@ -273,7 +282,9 @@ export default function App() {
               </div>
 
               {feedback && (
-                <div className={`feedback ${feedback.correct ? "correct" : "incorrect"}`}>
+                <div
+                  className={`feedback ${feedback.correct ? "correct" : "incorrect"}`}
+                >
                   <p className="feedback-title">
                     {feedback.correct ? "✅ Correct!" : "❌ Incorrect"}
                   </p>
@@ -290,5 +301,3 @@ export default function App() {
     </div>
   );
 }
-
-
